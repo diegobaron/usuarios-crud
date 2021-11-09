@@ -4,10 +4,22 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col">
+            <x-alert/>
             <div class="card">
+
                 <div class="card-header">
-                    Usuários
+                    <div class="row align-item-center">
+                        <div class="col">
+                            Usuários
+                        </div>
+                        <div class="col">
+                            <div class="float-right">
+                                <a href="{{route('users.create')}}" class="btn btn-primary">Novo</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -33,9 +45,13 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <form class="d-inline" action="{{route('users.destroy', ['user' => $user->id])}}" method="POST">
-                                                <input type="hidden" name="_token" :value="{{csrf_token()}}">
-                                                <input type="hidden" name="_method" value="delete">
-                                                <button class="btn btn-danger btn-sm" >
+                                                @csrf
+                                                @method('DELETE')
+                                                <button 
+                                                    type="submit" 
+                                                    class="btn btn-danger btn-sm" 
+                                                    onclick="return confirm('Tem certeza que deseja excluir este usuário?')" 
+                                                >
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
@@ -46,6 +62,7 @@
                         </table>
                     </div>
                 </div>
+
                 <div class="card-footer">
                     <div class="row justify-content-between align-items-center">
                         <div class="col-12 col-md-6" >
@@ -56,6 +73,7 @@
                         </div>
                     </div>
                 </div>
+                
             </div>
         </div>
     </div>
