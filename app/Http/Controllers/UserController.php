@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Interfaces\UserRespositoryInterface;
-use Illuminate\Http\Request;
+use App\Http\Requests\UserRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -17,7 +19,7 @@ class UserController extends Controller
      */
     public function __construct(UserRespositoryInterface $userRepository)
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except('store');
         $this->userRepository = $userRepository;
         
     }
@@ -29,8 +31,13 @@ class UserController extends Controller
      */
     public function index()
     {
+        $userRepository = $this->userRepository;
+        $users = $userRepository->setFilters([
+            'not_user_id' => $userRepository->getAuthUser()->id
+        ])->paginate();
+
         return view('users.index', [
-            'users' => $this->userRepository->paginate()
+            'users' => $users
         ]);
     }
 
@@ -50,9 +57,19 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(UserRequest $request)
     {
-        //
+        $data = $request->validated();
+        $userRepository = $this->userRepository;
+        $user = $userRepository->getModel();
+        $data['password'] = Hash::make($data['password']);
+        $user = $user->create($data);
+        if(!$userRepository->getAuthUser()) {
+            Auth::login($user);
+            return redirect()->route('home');
+        }
+        
+        return redirect()->route('users.index')->with('success', 'Usuário cadastrado com sucesso!');
     }
 
     /**
@@ -74,7 +91,9 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('users.edit');
+        return view('users.edit', [
+            'user' => $user
+        ]);
     }
 
     /**
@@ -84,9 +103,11 @@ class UserController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(UserRequest $request, User $user)
     {
-        //
+        $data = $request->validated();
+        $user->update($data);
+        return redirect()->route('users.index')->with('success', 'Usuário editado com sucesso!');
     }
 
     /**
@@ -97,6 +118,12 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        //
+        $userRepository = $this->userRepository;
+        $loggedUser = $userRepository->getAuthUser();
+        if($user->id === $loggedUser->id) {
+            return redirect()->route('users.index')->with('error', 'Não foi possível excluir o usuário!');
+        }
+        $user->delete();
+        return redirect()->route('users.index')->with('success', 'Usuário excluído com sucesso!');
     }
 }
