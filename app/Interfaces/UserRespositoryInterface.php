@@ -2,4 +2,7 @@
 
 namespace App\Interfaces;
 
-interface UserRespositoryInterface extends BaseRepositoryInterface {}
+interface UserRespositoryInterface extends BaseRepositoryInterface 
+{
+    public function getAuthUser();
+}
